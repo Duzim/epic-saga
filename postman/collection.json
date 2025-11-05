@@ -1,0 +1,255 @@
+{
+  "info": {
+    "_postman_id": "c1f7b8e0-a4d1-4f3b-8f9a-9e1f2b3e4c5d",
+    "name": "Exercício 01 - Epic Saga (SAO)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "123456"
+  },
+  "item": [
+    {
+      "name": "[SAGA] Orquestrador (Porta 3000)",
+      "description": "Estes são os testes principais. Chame estas rotas para iniciar a saga.",
+      "item": [
+        {
+          "name": "[SUCESSO] Pedido Completo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"clienteId\": \"cliente-sucesso\",\r\n  \"produtoId\": \"5f7068f4874d4089\",\r\n  \"quantidade\": 1,\r\n  \"valor\": 150.00\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl_orchestrator}}/processar-pedido",
+              "host": ["{{baseUrl_orchestrator}}"],
+              "path": ["processar-pedido"]
+            },
+            "description": "Simula um fluxo completo de sucesso. \n- Pagamento > 100 (OK)\n- Estoque < 100 (OK)"
+          },
+          "response": []
+        },
+        {
+          "name": "[FALHA] Falha no Pagamento (Rollback)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"clienteId\": \"cliente-falha-pagamento\",\r\n  \"produtoId\": \"5f7068f4874d4089\",\r\n  \"quantidade\": 1,\r\n  \"valor\": 50.00\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl_orchestrator}}/processar-pedido",
+              "host": ["{{baseUrl_orchestrator}}"],
+              "path": ["processar-pedido"]
+            },
+            "description": "Simula uma falha no serviço de pagamentos (valor < 100). \n\n**Resultado Esperado:**\n1. `orders-service` cria o pedido.\n2. `payment-service` recusa o pagamento (Erro 400).\n3. `orchestrator` inicia o rollback.\n4. `orchestrator` chama `PUT /pedidos/:id/status` com `{ \"status\": \"CANCELADO\" }`.\n5. O Orquestrador retorna um Erro 500."
+          },
+          "response": []
+        },
+        {
+          "name": "[FALHA] Falha no Estoque (Rollback)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"clienteId\": \"cliente-falha-estoque\",\r\n  \"produtoId\": \"5f7068f4874d4089\",\r\n  \"quantidade\": 500,\r\n  \"valor\": 150.00\r\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl_orchestrator}}/processar-pedido",
+              "host": ["{{baseUrl_orchestrator}}"],
+              "path": ["processar-pedido"]
+            },
+            "description": "Simula uma falha no serviço de estoque (quantidade > 100).\n\n**Resultado Esperado:**\n1. `orders-service` cria o pedido.\n2. `payment-service` aprova o pagamento.\n3. `stock-service` recusa a reserva (Erro 400).\n4. `orchestrator` inicia o rollback.\n5. `orchestrator` chama `POST /pagamentos/:id/reembolso`.\n6. `orchestrator` chama `PUT /pedidos/:id/status` com `{ \"status\": \"CANCELADO\" }`.\n7. O Orquestrador retorna um Erro 500."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "[Testes] Serviços Individuais",
+      "description": "Use esta pasta para testar cada microsserviço isoladamente.",
+      "item": [
+        {
+          "name": "Pedidos (Porta 3001)",
+          "item": [
+            {
+              "name": "POST /pedidos",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"clienteId\": \"cliente-teste-individual\",\r\n  \"produtoId\": \"produto-teste\",\r\n  \"quantidade\": 1,\r\n  \"valor\": 150.00\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl_pedidos}}/pedidos",
+                  "host": ["{{baseUrl_pedidos}}"],
+                  "path": ["pedidos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "PUT /pedidos/:id/status",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"status\": \"CANCELADO\"\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl_pedidos}}/pedidos/{{pedidoId}}/status",
+                  "host": ["{{baseUrl_pedidos}}"],
+                  "path": ["pedidos", "{{pedidoId}}", "status"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Pagamentos (Porta 3002)",
+          "item": [
+            {
+              "name": "POST /pagamentos",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"pedidoId\": \"uuid-pedido-teste\",\r\n  \"produtoId\": \"produto-teste\",\r\n  \"valor\": 150.00\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl_pagamentos}}/pagamentos",
+                  "host": ["{{baseUrl_pagamentos}}"],
+                  "path": ["pagamentos"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /pagamentos/:id/reembolso",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl_pagamentos}}/pagamentos/{{pagamentoId}}/reembolso",
+                  "host": ["{{baseUrl_pagamentos}}"],
+                  "path": ["pagamentos", "{{pagamentoId}}", "reembolso"]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Estoque (Porta 3003)",
+          "item": [
+            {
+              "name": "POST /estoque/reserva",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"pedidoId\": \"uuid-pedido-teste\",\r\n  \"produtoId\": \"5f7068f4874d4089\",\r\n  \"quantidade\": 1\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl_estoque}}/estoque/reserva",
+                  "host": ["{{baseUrl_estoque}}"],
+                  "path": ["estoque", "reserva"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "POST /estoque/liberacao",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n  \"pedidoId\": \"uuid-pedido-teste\",\r\n  \"produtoId\": \"5f7068f4874d4089\",\r\n  \"quantidade\": 1\r\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl_estoque}}/estoque/liberacao",
+                  "host": ["{{baseUrl_estoque}}"],
+                  "path": ["estoque", "liberacao"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl_orchestrator",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "baseUrl_pedidos",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "baseUrl_pagamentos",
+      "value": "http://localhost:3002"
+    },
+    {
+      "key": "baseUrl_estoque",
+      "value": "http://localhost:3003"
+    },
+    {
+      "key": "pedidoId",
+      "value": "uuid-do-pedido"
+    },
+    {
+      "key": "pagamentoId",
+      "value": "uuid-do-pagamento"
+    }
+  ]
+}

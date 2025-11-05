@@ -9,7 +9,7 @@ const api = require("../api/client");
 // }
 
 async function init(sagaData) {
-  console.log("🤖 [Service] Iniciando saga...", sagaData);
+  console.log("[Service] Iniciando saga...", sagaData);
   let orderResult = null;
   let updateOrderResult = null;
   let paymentResult = null;
@@ -17,22 +17,22 @@ async function init(sagaData) {
 
   try {
     const orderDto = { ...sagaData };
-    console.log("🤖 [Service] -> 1. Criando Pedido...");
+    console.log("[Service] -> 1. Criando Pedido...");
     const orderResponse = await api.order.create(orderDto);
     orderResult = orderResponse.data;
-    console.log(`🤖 [Service] <- 1. Pedido Criado: ${orderResult.orderId}`);
+    console.log(`[Service] <- 1. Pedido Criado: ${orderResult.orderId}`);
 
     const paymentDto = {
       pedidoId: orderResult.pedidoId,
       produtoId: sagaData.produtoId,
       valor: sagaData.valor,
     };
-    console.log("🤖 [Service] -> 2. Processando Pagamento...");
+    console.log("[Service] -> 2. Processando Pagamento...");
     const paymentResponse = await api.payment.pay(paymentDto);
     paymentResult = paymentResponse.data;
-    console.log("🤖 [Service] <- 2. Pagamento Aprovado: ", paymentResult);
+    console.log("[Service] <- 2. Pagamento Aprovado: ", paymentResult);
 
-    console.log("🤖 [Service] -> 3. Reservando Estoque...");
+    console.log("[Service] -> 3. Reservando Estoque...");
     const stockReserveDto = {
       pedidoId: orderResult.pedidoId,
       produtoId: sagaData.produtoId,
@@ -40,19 +40,19 @@ async function init(sagaData) {
     };
     const stockResponse = await api.stock.reserve(stockReserveDto);
     stockResult = stockResponse.data;
-    console.log(`🤖 [Service] <- 3. Estoque Reservado.`);
+    console.log(`[Service] <- 3. Estoque Reservado.`);
 
     const updateOrderStatusDto = {
       status: "CONFIRMADO",
     };
-    console.log(`🤖 [Service] -> 4. Atualizando estado do pedido.`);
+    console.log(`[Service] -> 4. Atualizando estado do pedido.`);
     const updateOrderStatusResponse = await api.order.updateStatus(
       orderResult.pedidoId,
       updateOrderStatusDto
     );
     updateOrderResult = updateOrderStatusResponse.data;
     console.log(
-      "🤖 [Service] <- 4. Estado do pedido foi atualizado.",
+      "[Service] <- 4. Estado do pedido foi atualizado.",
       updateOrderResult
     );
 
@@ -68,29 +68,28 @@ async function init(sagaData) {
       ? error.response.data
       : { message: error.message };
     console.error(`❌ [Service] FALHA NA SAGA! Etapa falhou.`, originalError);
-    console.log("🤖 [Service] -> Iniciando Rollback...");
+    console.log("[Service] -> Iniciando Rollback...");
 
     try {
       if (stockResult) {
-        console.log(`🤖 [Service] <- Rollback 3: Liberando Estoque...`);
+        console.log(`[Service] <- Rollback 3: Liberando Estoque...`);
         await api.stock.release({ pedidoId: orderResult.pedidoId });
       }
 
       if (paymentResult) {
-        console.log(`🤖 [Service] <- Rollback 2: Reembolsando Pagamento...`);
+        console.log(`[Service] <- Rollback 2: Reembolsando Pagamento...`);
         await api.payment.reimbursement(paymentResult.pagametoId);
       }
 
       // Rollback 1: Se o pedido foi criado, cancela
       if (orderResult) {
-        console.log(`🤖 [Service] <- Rollback 1: Cancelando Pedido...`);
+        console.log(`[Service] <- Rollback 1: Cancelando Pedido...`);
         await api.order.updateStatus(orderResult.pedidoId, {
           status: "CANCELADO",
         });
       }
 
-      console.log("🤖 [Service] Rollback concluído.");
-      // **IMPORTANTE**: Retorna o objeto de falha para o controller
+      console.log("[Service] Rollback concluído.");
       return {
         success: false,
         message: "Falha na Saga, rollback executado.",
@@ -101,7 +100,6 @@ async function init(sagaData) {
         "❌ [Service] FALHA CATASTRÓFICA! Rollback falhou!",
         rollbackError.message
       );
-      // **IMPORTANTE**: Retorna a falha catastrófica
       return {
         success: false,
         message:
