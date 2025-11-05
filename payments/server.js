@@ -4,7 +4,7 @@ const router = require('./src/router');
 const app = express();
 const PORT = 3002;
 
-app.use(express.json())
+app.use(express.json());
 app.use(router);
 
 app.listen(PORT, () => {

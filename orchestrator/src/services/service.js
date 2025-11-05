@@ -1,13 +1,5 @@
 const api = require("../api/client");
 
-// sagaData
-// {
-//   "clienteId": "cliente-123",
-//   "produtoId": "produto-abc",
-//   "quantidade": 1,
-//   "valor": 150.00
-// }
-
 async function init(sagaData) {
   console.log("[Service] Iniciando saga...", sagaData);
   let orderResult = null;
@@ -20,7 +12,7 @@ async function init(sagaData) {
     console.log("[Service] -> 1. Criando Pedido...");
     const orderResponse = await api.order.create(orderDto);
     orderResult = orderResponse.data;
-    console.log(`[Service] <- 1. Pedido Criado: ${orderResult.orderId}`);
+    console.log("[Service] <- 1. Pedido Criado: ", orderResult);
 
     const paymentDto = {
       pedidoId: orderResult.pedidoId,
@@ -40,10 +32,10 @@ async function init(sagaData) {
     };
     const stockResponse = await api.stock.reserve(stockReserveDto);
     stockResult = stockResponse.data;
-    console.log(`[Service] <- 3. Estoque Reservado.`);
+    console.log("[Service] <- 3. Estoque Reservado: ", stockResult);
 
     const updateOrderStatusDto = {
-      status: "CONFIRMADO",
+      status: "CONCLUIDO",
     };
     console.log(`[Service] -> 4. Atualizando estado do pedido.`);
     const updateOrderStatusResponse = await api.order.updateStatus(
@@ -57,12 +49,10 @@ async function init(sagaData) {
     );
 
     return {
-      success: true,
       message: "Saga concluída com sucesso!",
       status: "PEDIDO_CONFIRMADO",
       data: { orderResult, paymentResult, stockResult, updateOrderResult },
     };
-    
   } catch (error) {
     const originalError = error.response
       ? error.response.data
@@ -73,17 +63,20 @@ async function init(sagaData) {
     try {
       if (stockResult) {
         console.log(`[Service] <- Rollback 3: Liberando Estoque...`);
+        console.log(stockResult);
         await api.stock.release({ pedidoId: orderResult.pedidoId });
       }
 
       if (paymentResult) {
         console.log(`[Service] <- Rollback 2: Reembolsando Pagamento...`);
-        await api.payment.reimbursement(paymentResult.pagametoId);
+        console.log(paymentResult);
+        await api.payment.reimbursement(paymentResult.pagamentoId);
       }
 
       // Rollback 1: Se o pedido foi criado, cancela
       if (orderResult) {
         console.log(`[Service] <- Rollback 1: Cancelando Pedido...`);
+        console.log(orderResult);
         await api.order.updateStatus(orderResult.pedidoId, {
           status: "CANCELADO",
         });
@@ -91,7 +84,6 @@ async function init(sagaData) {
 
       console.log("[Service] Rollback concluído.");
       return {
-        success: false,
         message: "Falha na Saga, rollback executado.",
         error: originalError,
       };
@@ -101,7 +93,6 @@ async function init(sagaData) {
         rollbackError.message
       );
       return {
-        success: false,
         message:
           "Falha na Saga E Falha no Rollback. Intervenção manual necessária.",
         error: rollbackError.message,

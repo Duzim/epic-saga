@@ -3,7 +3,7 @@ const controller = require('./controllers');
 
 const router = express.Router();
 
-router.post('/pagamentos', (req, res) => {    
+router.post('/pagamentos', (req, res) => { 
     controller.process(req, res);
 });
 router.post('/pagamentos/:id/reembolso', (req, res) => {

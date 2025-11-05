@@ -8,6 +8,9 @@ function generateRandomInterval() {
 }
 
 async function processPayment(paymentDto) {
+  if (paymentDto.produtoId === "123456") {
+    throw new Error("Pagamento Recusado.")
+  }
   const newPayment = {
     id: v4(),
     status: "APROVADO",
