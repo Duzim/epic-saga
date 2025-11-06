@@ -1,0 +1,6 @@
+{
+    "code-runner.executorMap": {
+        "shellscript": "bash",
+    },
+    "code-runner.runInTerminal": true,
+}
