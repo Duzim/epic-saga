@@ -45,7 +45,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"clienteId\": \"cliente-falha-pagamento\",\r\n  \"produtoId\": \"5f7068f4874d4089\",\r\n  \"quantidade\": 1,\r\n  \"valor\": 50.00\r\n}"
+              "raw": "{\r\n  \"clienteId\": \"cliente-falha-pagamento\",\r\n  \"produtoId\": \"123456\",\r\n  \"quantidade\": 1,\r\n  \"valor\": 50.00\r\n}"
             },
             "url": {
               "raw": "{{baseUrl_orchestrator}}/processar-pedido",

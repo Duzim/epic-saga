@@ -12,6 +12,7 @@ async function init(req, res) {
     const initSagaDto = initSagaSchema.parse(body);
     const result = await service.init(initSagaDto);
 
+    console.log("[FINAL DA SAGA] resultado final da saga: ", result);
     res.status(201).json(result);
   } catch (error) {
     if (error instanceof ZodError) {
