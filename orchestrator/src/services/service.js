@@ -73,7 +73,6 @@ async function init(sagaData) {
         await api.payment.reimbursement(paymentResult.pagamentoId);
       }
 
-      // Rollback 1: Se o pedido foi criado, cancela
       if (orderResult) {
         console.log(`[Service] <- Rollback 1: Cancelando Pedido...`);
         console.log(orderResult);
