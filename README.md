@@ -1,5 +1,20 @@
 # THE EPIC SAGA!!!
 ![Imagem pipipi popopo](./.assets/image.png "a title")
+
+<p>
+  <a href="./LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/Duzim/epic-saga?style=flat-square&color=yellow">
+  </a>
+
+  <img alt="Top Language" src="https://img.shields.io/github/languages/top/Duzim/epic-saga?style=flat-square&color=blue">
+
+  <img alt="Repo Size" src="https://img.shields.io/github/repo-size/Duzim/epic-saga?style=flat-square&color=orange">
+
+  <a href="https://github.com/Duzim/epic-saga/commits/main">
+    <img alt="Last Commit" src="https://img.shields.io/github/last-commit/Duzim/epic-saga?style=flat-square&color=green">
+  </a>
+</p>
+
 ------
 ## Sobre o Projeto
 Este é um projeto acadêmico que simula um processo de e-commerce utilizando a arquitetura de microsserviços e o padrão Saga (Orquestração). O objetivo é demonstrar como manter a consistência transacional entre diferentes serviços que não compartilham o mesmo banco de dados.
